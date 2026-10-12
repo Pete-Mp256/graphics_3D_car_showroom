@@ -11,5 +11,7 @@ struct Color {
 };
 
 Color rgb(int r, int g, int b);                  // clamps to 0..255
+Color fromHSV(double hDeg, double s, double v);  // h in degrees, s,v in 0..1
+void toHSV(const Color& c, double& hDeg, double& s, double& v);
 
 } // namespace cg
