@@ -13,5 +13,7 @@ struct Color {
 Color rgb(int r, int g, int b);                  // clamps to 0..255
 Color fromHSV(double hDeg, double s, double v);  // h in degrees, s,v in 0..1
 void toHSV(const Color& c, double& hDeg, double& s, double& v);
+Color mix(const Color& a, const Color& b, double t); // linear blend, t in 0..1
+Color shade(const Color& c, double factor);          // >1 lighter, <1 darker
 
 } // namespace cg

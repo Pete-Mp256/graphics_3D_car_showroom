@@ -38,4 +38,15 @@ void toHSV(const Color& col, double& h, double& s, double& v) {
     if (h < 0) h += 360;
 }
 
+Color mix(const Color& a, const Color& b, double t) {
+    return {clampByte(a.r + (b.r - a.r) * t), clampByte(a.g + (b.g - a.g) * t),
+            clampByte(a.b + (b.b - a.b) * t)};
+}
+
+Color shade(const Color& c, double f) {
+    // Above 1 we blend towards white so bright colours still get a visible highlight.
+    if (f <= 1.0) return {clampByte(c.r * f), clampByte(c.g * f), clampByte(c.b * f)};
+    return mix(c, {255, 255, 255}, std::min(f - 1.0, 1.0));
+}
+
 } // namespace cg
