@@ -4,8 +4,6 @@ An interactive automotive showroom built from first principles in C++: a car on 
 display platform, lit by showroom spotlights, with an on-screen picker for changing its paint
 colour and an orbiting camera.
 
-![Showroom render](docs/images/showroom.png)
-
 ## Project description
 
 Visiting a physical showroom is limited by location, stock and time. Our application lets car
@@ -25,10 +23,10 @@ car profile, transformations and colour model.
 |---|---|---|
 | Samuel Macharia | Graphics & algorithm implementation | Lines and line clipping (`line.*`, line part of `clip.*`) |
 | Daniel Obuya | Graphics & algorithm implementation | Polygons, transformations, polygon clipping and filling (`polygon.*`, `transform.*`, `fill.*`, polygon part of `clip.*`) |
-| Pete Njagi | 3D modelling, animation & graphics effects | Curves and the car model (`curve.*`, car profile in `showroom.cpp`) |
+| Pete Njagi (group leader) | 3D modelling, animation & graphics effects | Repository skeleton and README; curves and the car model (`curve.*`, `showroom.hpp`, car profile in `showroom.cpp`) |
 | Mary Arop | 3D modelling, animation & graphics effects | Circles/ellipses, platform and animation frames (`circle.*`, platform in `showroom.cpp`) |
 | Dylan Saisi | Interface development & testing | Colour model and UI (`color.*`, `palette.hpp`, picker/minimap, `showroom_main.cpp`) |
-| Danni Podho | Interface development & testing | Tests, build system, algorithms demo, README (`tests/`, `Makefile`, `CMakeLists.txt`) |
+| Danni Podho | Interface development & testing | Framebuffer, tests and algorithms demo (`canvas.*`, `tests/`, `apps/algorithms_demo.cpp`) |
 
 ## Technologies and tools
 
@@ -38,9 +36,10 @@ car profile, transformations and colour model.
 - **Git and GitHub** for version control, issues and code review
 - Planned for later milestones: **OpenGL** (with GLFW/GLAD and GLM) for the real-time 3D showroom
 
-## Graphics techniques implemented so far
+## Graphics techniques (where each one goes)
 
-![Algorithms demo](docs/images/algorithms.png)
+Each row is an issue in [docs/PLAN.md](docs/PLAN.md); this table becomes the record of what is
+implemented as the pull requests are merged.
 
 | Technique | Where in the code | How the showroom uses it |
 |---|---|---|
@@ -87,25 +86,14 @@ To turn frames into a video (optional, needs ffmpeg):
 
 ## Current progress
 
-- A small graphics library (`include/cg`, `src/cg`) implements every technique covered so far.
-- The showroom renderer composes them into the project's scene: room, spotlights, rotating
-  platform, a Bezier-modelled car with wheels and glass, a paint colour picker and a top-down
-  minimap with the planned camera orbit.
-- Colour switching and platform rotation work from the command line, and the animation can be
-  exported frame by frame.
-- 44 automated checks cover the algorithms (`make test`).
+- Repository skeleton: build files (Make and CMake), shared `Vec2` type, plan and work split.
+- Next: each member opens their issue from [docs/PLAN.md](docs/PLAN.md) and merges it in the
+  dependency order listed there. The commands under "How to compile and run" work once the
+  apps and tests are in.
 
 ## Known limitations and issues
 
-- Output is a still image (or a sequence of frames), not a live window; real-time interaction
-  arrives with the OpenGL milestone.
-- The car is a 2D side profile. The platform rotation is shown by the platform and the minimap,
-  not by the car itself, until the 3D model exists.
-- Edges are aliased: there is no anti-aliasing yet.
-- The scan-line fill uses the even-odd rule, so self-intersecting polygons fill as alternating regions.
-- Sutherland-Hodgman needs a convex clip polygon; the window reflection is skipped if the window
-  shape is ever made concave.
-- PPM files are large and not every image viewer opens them.
+To be filled in as the modules land.
 
 ## Repository structure
 
