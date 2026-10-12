@@ -34,6 +34,15 @@ Vec2 catmullRom(Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3, double t) {
             (p1 * 3.0 - p0 - p2 * 3.0 + p3) * t3) * 0.5;
 }
 
+Vec2 bsplinePoint(Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3, double t) {
+    double t2 = t * t, t3 = t2 * t;
+    double b0 = (1 - t) * (1 - t) * (1 - t) / 6.0;
+    double b1 = (3 * t3 - 6 * t2 + 4) / 6.0;
+    double b2 = (-3 * t3 + 3 * t2 + 3 * t + 1) / 6.0;
+    double b3 = t3 / 6.0;
+    return p0 * b0 + p1 * b1 + p2 * b2 + p3 * b3;
+}
+
 // Shared driver: for span i use points i-1..i+2. Open curves clamp indices at the ends
 // (for Catmull-Rom that still passes through the first and last points).
 template <typename Eval>
@@ -54,6 +63,10 @@ static std::vector<Vec2> sampleSpline(const std::vector<Vec2>& p, int segs, bool
 
 std::vector<Vec2> sampleCatmullRom(const std::vector<Vec2>& pts, int segs, bool closed) {
     return sampleSpline(pts, segs, closed, catmullRom);
+}
+
+std::vector<Vec2> sampleBSpline(const std::vector<Vec2>& pts, int segs, bool closed) {
+    return sampleSpline(pts, segs, closed, bsplinePoint);
 }
 
 void drawPolyline(Canvas& c, const std::vector<Vec2>& pts, Color col, bool closed) {

@@ -17,6 +17,10 @@ std::vector<Vec2> sampleCubicPath(const std::vector<Vec2>& pts, int segmentsPerC
 Vec2 catmullRom(Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3, double t);
 std::vector<Vec2> sampleCatmullRom(const std::vector<Vec2>& pts, int segmentsPerSpan, bool closed);
 
+// Uniform cubic B-spline: approximates the control points, C2-continuous.
+Vec2 bsplinePoint(Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3, double t);
+std::vector<Vec2> sampleBSpline(const std::vector<Vec2>& pts, int segmentsPerSpan, bool closed);
+
 void drawPolyline(Canvas& c, const std::vector<Vec2>& pts, Color col, bool closed = false);
 
 } // namespace cg
