@@ -25,6 +25,15 @@ Mat3 Mat3::rotate(double a) {
     return t;
 }
 
+// Composite transform: move the pivot to the origin, transform, move back.
+Mat3 Mat3::rotateAbout(double a, const Vec2& p) {
+    return translate(p.x, p.y) * rotate(a) * translate(-p.x, -p.y);
+}
+
+Mat3 Mat3::scaleAbout(double sx, double sy, const Vec2& p) {
+    return translate(p.x, p.y) * scale(sx, sy) * translate(-p.x, -p.y);
+}
+
 Mat3 Mat3::operator*(const Mat3& o) const {
     Mat3 r;
     for (int i = 0; i < 3; ++i)

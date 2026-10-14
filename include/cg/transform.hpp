@@ -14,6 +14,8 @@ struct Mat3 {
     static Mat3 translate(double tx, double ty);
     static Mat3 scale(double sx, double sy);
     static Mat3 rotate(double radians); // counter-clockwise about the origin
+    static Mat3 rotateAbout(double radians, const Vec2& pivot);
+    static Mat3 scaleAbout(double sx, double sy, const Vec2& pivot);
 
     Mat3 operator*(const Mat3& o) const; // this applied after o
     Vec2 apply(const Vec2& p) const;
