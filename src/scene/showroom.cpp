@@ -79,6 +79,21 @@ void drawCar(Canvas& c, Color paint) {
                     {gb.xmin + 115, gb.ymax + 5}, {gb.xmin + 80, gb.ymax + 5}});
     if (glass.isConvex()) fillPolygon(c, clipSutherlandHodgman(streak, glass), Color{255, 255, 255}, 0.18);
     drawThickLine(c, toScreen.apply({-30, 131}), toScreen.apply({-26, 94}), 6, shade(paint, 0.8)); // B-pillar
+
+    // Door seams as cubic Bezier curves, handles as short thick lines.
+    for (const auto& seam : {std::vector<Vec2>{{58, 92}, {66, 70}, {64, 45}, {55, 30}},
+                             std::vector<Vec2>{{-28, 95}, {-24, 70}, {-26, 45}, {-30, 30}},
+                             std::vector<Vec2>{{-118, 100}, {-110, 75}, {-108, 50}, {-104, 34}}}) {
+        std::vector<Vec2> pts;
+        for (const Vec2& p : sampleBezier(seam, 20)) pts.push_back(toScreen.apply(p));
+        drawPolyline(c, pts, shade(paint, 0.4));
+    }
+    drawThickLine(c, toScreen.apply({30, 82}), toScreen.apply({14, 82}), 3, shade(paint, 0.5));
+    drawThickLine(c, toScreen.apply({-56, 82}), toScreen.apply({-72, 82}), 3, shade(paint, 0.5));
+
+    Vec2 head = toScreen.apply({190, 62});
+    fillEllipse(c, ri(head.x), ri(head.y), ri(10 * s), ri(6 * s), Color{255, 248, 220});
+    fillPolygon(c, Polygon({{-205, 66}, {-196, 66}, {-192, 80}, {-200, 82}}).transformed(toScreen), Color{200, 20, 25});
 }
 
 } // namespace
