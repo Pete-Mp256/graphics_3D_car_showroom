@@ -38,4 +38,19 @@ void drawDashedLine(Canvas& c, Vec2 a, Vec2 b, Color col, int dash, int gap) {
     });
 }
 
+std::optional<Vec2> intersectLines(Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2) {
+    Vec2 da = a2 - a1, db = b2 - b1;
+    double denom = cross(da, db);
+    if (std::fabs(denom) < 1e-12) return std::nullopt;
+    double t = cross(b1 - a1, db) / denom;
+    return a1 + da * t;
+}
+
+double distanceToSegment(Vec2 p, Vec2 a, Vec2 b) {
+    Vec2 ab = b - a;
+    double len2 = dot(ab, ab);
+    double t = len2 == 0 ? 0 : std::clamp(dot(p - a, ab) / len2, 0.0, 1.0);
+    return (p - (a + ab * t)).length();
+}
+
 } // namespace cg

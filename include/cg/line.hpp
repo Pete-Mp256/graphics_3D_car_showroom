@@ -28,5 +28,9 @@ void drawLineDDA(Canvas& c, Vec2 a, Vec2 b, Color col);
 void drawLine(Canvas& c, Vec2 a, Vec2 b, Color col); // Bresenham on rounded endpoints
 void drawLineAlpha(Canvas& c, Vec2 a, Vec2 b, Color col, double alpha);
 void drawDashedLine(Canvas& c, Vec2 a, Vec2 b, Color col, int dash, int gap);
+// Intersection of the infinite lines through (a1,a2) and (b1,b2); empty if parallel.
+std::optional<Vec2> intersectLines(Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2);
+// Shortest distance from p to the segment ab.
+double distanceToSegment(Vec2 p, Vec2 a, Vec2 b);
 
 } // namespace cg
