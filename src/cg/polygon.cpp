@@ -1,6 +1,7 @@
 #include "cg/polygon.hpp"
 #include <algorithm>
 #include <cmath>
+#include "cg/line.hpp"
 
 namespace cg {
 
@@ -71,6 +72,30 @@ Rect Polygon::bounds() const {
         r.xmax = std::max(r.xmax, p.x); r.ymax = std::max(r.ymax, p.y);
     }
     return r;
+}
+
+Polygon Polygon::transformed(const Mat3& m) const {
+    Polygon out;
+    out.pts.reserve(pts.size());
+    for (const Vec2& p : pts) out.pts.push_back(m.apply(p));
+    return out;
+}
+
+Polygon Polygon::rectangle(const Rect& r) {
+    return Polygon({{r.xmin, r.ymin}, {r.xmax, r.ymin}, {r.xmax, r.ymax}, {r.xmin, r.ymax}});
+}
+
+Polygon Polygon::regular(Vec2 c, double radius, int sides, double start) {
+    Polygon p;
+    for (int i = 0; i < sides; ++i) {
+        double a = start + 2 * PI * i / sides;
+        p.pts.push_back({c.x + radius * std::cos(a), c.y + radius * std::sin(a)});
+    }
+    return p;
+}
+
+void drawPolygon(Canvas& c, const Polygon& poly, Color col) {
+    for (std::size_t i = 0, n = poly.size(); i < n; ++i) drawLine(c, poly.pts[i], poly.pts[(i + 1) % n], col);
 }
 
 } // namespace cg

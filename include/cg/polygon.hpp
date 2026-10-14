@@ -21,6 +21,13 @@ struct Polygon {
     bool isConvex() const;
     bool contains(const Vec2& p) const; // even-odd ray casting
     Rect bounds() const;
+
+    Polygon transformed(const Mat3& m) const;
+
+    static Polygon rectangle(const Rect& r);
+    static Polygon regular(Vec2 centre, double radius, int sides, double startAngle = 0.0);
 };
+
+void drawPolygon(Canvas& c, const Polygon& poly, Color col); // outline with Bresenham
 
 } // namespace cg
