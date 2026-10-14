@@ -26,5 +26,7 @@ void bresenham(int x0, int y0, int x1, int y1, Plot plot) {
 
 void drawLineDDA(Canvas& c, Vec2 a, Vec2 b, Color col);
 void drawLine(Canvas& c, Vec2 a, Vec2 b, Color col); // Bresenham on rounded endpoints
+void drawLineAlpha(Canvas& c, Vec2 a, Vec2 b, Color col, double alpha);
+void drawDashedLine(Canvas& c, Vec2 a, Vec2 b, Color col, int dash, int gap);
 
 } // namespace cg
