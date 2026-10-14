@@ -18,6 +18,9 @@ struct Polygon {
     double area() const;
     double perimeter() const;
     Vec2 centroid() const;
+    bool isConvex() const;
+    bool contains(const Vec2& p) const; // even-odd ray casting
+    Rect bounds() const;
 };
 
 } // namespace cg
