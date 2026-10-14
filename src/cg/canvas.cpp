@@ -13,6 +13,13 @@ void Canvas::setPixel(int x, int y, Color c) {
     if (inBounds(x, y)) pixels_[static_cast<std::size_t>(y) * w_ + x] = c;
 }
 
+void Canvas::blendPixel(int x, int y, Color c, double alpha) {
+    if (!inBounds(x, y)) return;
+    alpha = std::clamp(alpha, 0.0, 1.0);
+    Color& dst = pixels_[static_cast<std::size_t>(y) * w_ + x];
+    dst = mix(dst, c, alpha); // out = dst*(1-a) + src*a
+}
+
 Color Canvas::getPixel(int x, int y) const {
     return inBounds(x, y) ? pixels_[static_cast<std::size_t>(y) * w_ + x] : Color{};
 }

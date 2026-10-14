@@ -18,6 +18,7 @@ public:
 
     void clear(Color c);
     void setPixel(int x, int y, Color c);                 // ignored when out of bounds
+    void blendPixel(int x, int y, Color c, double alpha); // alpha compositing, 0..1
     Color getPixel(int x, int y) const;
 
 private:
