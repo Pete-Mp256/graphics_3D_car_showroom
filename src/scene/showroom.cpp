@@ -46,7 +46,23 @@ const std::vector<Vec2> WINDOW = {
 };
 constexpr double WHEEL_X = 125, WHEEL_R = 38;
 
-void drawCar(Canvas& c, Color paint) {
+void drawWheel(Canvas& c, const Mat3& toScreen, double scale, double wheelX, double spin) {
+    Vec2 centre = toScreen.apply({wheelX, WHEEL_R});
+    int cx = ri(centre.x), cy = ri(centre.y), r = ri(WHEEL_R * scale);
+    const Color tyre{22, 22, 25}, rimEdge{200, 202, 210}, rimFill{140, 143, 152};
+
+    fillCircle(c, cx, cy, r, tyre);
+    int rimR = ri(r * 0.62);
+    drawCircle(c, cx, cy, rimR, rimEdge);
+    boundaryFill(c, cx, cy, rimFill, rimEdge); // seed fill inside the midpoint-circle outline
+    for (int k = 0; k < 5; ++k) {
+        Mat3 spoke = Mat3::rotateAbout(spin + k * 2 * PI / 5, centre);
+        drawThickLine(c, spoke.apply({centre.x, centre.y - 4}), spoke.apply({centre.x, centre.y - rimR + 2}), 4, {90, 92, 100});
+    }
+    fillCircle(c, cx, cy, ri(r * 0.16), {60, 62, 68});
+}
+
+void drawCar(Canvas& c, Color paint, double spin) {
     const double s = 1.15;
     const Vec2 ground{PLATFORM_CENTRE.x, PLATFORM_CENTRE.y + 14};
     // Car space -> screen: scale (flipping y because screen y points down), then translate.
@@ -94,14 +110,17 @@ void drawCar(Canvas& c, Color paint) {
     Vec2 head = toScreen.apply({190, 62});
     fillEllipse(c, ri(head.x), ri(head.y), ri(10 * s), ri(6 * s), Color{255, 248, 220});
     fillPolygon(c, Polygon({{-205, 66}, {-196, 66}, {-192, 80}, {-200, 82}}).transformed(toScreen), Color{200, 20, 25});
+
+    for (double wx : {WHEEL_X, -WHEEL_X}) drawWheel(c, toScreen, s, wx, spin);
 }
 
 } // namespace
 
 void renderShowroom(Canvas& c, const ShowroomOptions& opt) {
+    double theta = deg2rad(opt.platformDeg);
     // Layers are drawn back to front: room, spotlights and platform go before the car,
     // the colour picker and minimap after it.
-    drawCar(c, opt.paint);
+    drawCar(c, opt.paint, theta * 3); // wheels turn three times per platform turn
 }
 
 } // namespace scene
