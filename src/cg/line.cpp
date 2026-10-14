@@ -21,4 +21,10 @@ void drawLineDDA(Canvas& c, Vec2 a, Vec2 b, Color col) {
     }
 }
 
+static int r(double v) { return static_cast<int>(std::lround(v)); }
+
+void drawLine(Canvas& c, Vec2 a, Vec2 b, Color col) {
+    bresenham(r(a.x), r(a.y), r(b.x), r(b.y), [&](int x, int y) { c.setPixel(x, y, col); });
+}
+
 } // namespace cg
