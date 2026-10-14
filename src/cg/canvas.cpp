@@ -24,4 +24,15 @@ Color Canvas::getPixel(int x, int y) const {
     return inBounds(x, y) ? pixels_[static_cast<std::size_t>(y) * w_ + x] : Color{};
 }
 
+bool Canvas::savePPM(const std::string& path) const {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) return false;
+    out << "P6\n" << w_ << ' ' << h_ << "\n255\n";
+    for (const Color& c : pixels_) {
+        const char bytes[3] = {static_cast<char>(c.r), static_cast<char>(c.g), static_cast<char>(c.b)};
+        out.write(bytes, 3);
+    }
+    return static_cast<bool>(out);
+}
+
 } // namespace cg

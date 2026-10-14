@@ -21,6 +21,8 @@ public:
     void blendPixel(int x, int y, Color c, double alpha); // alpha compositing, 0..1
     Color getPixel(int x, int y) const;
 
+    bool savePPM(const std::string& path) const; // binary P6
+
 private:
     int w_, h_;
     std::vector<Color> pixels_;
