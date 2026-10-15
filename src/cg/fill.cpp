@@ -68,4 +68,21 @@ void fillPolygon(Canvas& c, const Polygon& poly, Color col, double alpha) {
     fillPolygon(c, poly, [col](int, int) { return col; }, alpha);
 }
 
+void floodFill(Canvas& c, int x, int y, Color newColor) {
+    if (!c.inBounds(x, y)) return;
+    Color target = c.getPixel(x, y);
+    if (target == newColor) return;
+    std::vector<std::pair<int, int>> stack{{x, y}};
+    while (!stack.empty()) {
+        auto [px, py] = stack.back();
+        stack.pop_back();
+        if (!c.inBounds(px, py) || c.getPixel(px, py) != target) continue;
+        c.setPixel(px, py, newColor);
+        stack.push_back({px + 1, py});
+        stack.push_back({px - 1, py});
+        stack.push_back({px, py + 1});
+        stack.push_back({px, py - 1});
+    }
+}
+
 } // namespace cg

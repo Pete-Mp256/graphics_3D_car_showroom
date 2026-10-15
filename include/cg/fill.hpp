@@ -15,4 +15,7 @@ using Shader = std::function<Color(int x, int y)>;
 void fillPolygon(Canvas& c, const Polygon& poly, Color col, double alpha = 1.0);
 void fillPolygon(Canvas& c, const Polygon& poly, const Shader& shader, double alpha = 1.0);
 
+// Seed fills (4-connected, iterative so large regions don't overflow the stack).
+void floodFill(Canvas& c, int x, int y, Color newColor);                 // replaces target colour
+
 } // namespace cg
