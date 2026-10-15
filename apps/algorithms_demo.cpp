@@ -75,6 +75,48 @@ void filling(Canvas& c, Vec2 o) {
     floodFill(c, int(o.x + 120), int(o.y + 205), RED); // seed fill inside the circle outline
 }
 
+void polygonClipping(Canvas& c, Vec2 o) {
+    Polygon clipWin = Polygon::regular(o + Vec2{120, 120}, 75, 5, -PI / 2); // convex pentagon
+    Polygon subject({o + Vec2{20, 60}, o + Vec2{210, 40}, o + Vec2{130, 120}, o + Vec2{220, 210}, o + Vec2{40, 200}});
+    drawPolygon(c, subject, FAINT);
+    drawPolygon(c, clipWin, WHITE);
+    Polygon clipped = clipSutherlandHodgman(subject, clipWin);
+    fillPolygon(c, clipped, GREEN, 0.75);
+    drawPolygon(c, clipped, GREEN);
+}
+
+void circles(Canvas& c, Vec2 o) {
+    for (int r = 15; r <= 75; r += 15) drawCircle(c, int(o.x + 120), int(o.y + 90), r, BLUE);
+    fillEllipse(c, int(o.x + 120), int(o.y + 195), 95, 22, YELLOW, 0.5);
+    drawEllipse(c, int(o.x + 120), int(o.y + 195), 95, 22, YELLOW);
+    drawPolygon(c, ellipsePolygon(o + Vec2{120, 90}, 100, 35, 64, PI / 6), RED); // parametric, rotated
+}
+
+void bezier(Canvas& c, Vec2 o) {
+    std::vector<Vec2> ctrl{o + Vec2{20, 200}, o + Vec2{50, 30}, o + Vec2{190, 30}, o + Vec2{220, 200}};
+    drawPolyline(c, ctrl, FAINT);
+    for (const Vec2& p : ctrl) dot(c, p, WHITE);
+    // de Casteljau construction at t = 0.35.
+    double t = 0.35;
+    std::vector<Vec2> level = ctrl;
+    const Color levels[] = {GREEN, BLUE, RED};
+    for (int l = 0; level.size() > 1; ++l) {
+        std::vector<Vec2> nxt;
+        for (std::size_t i = 0; i + 1 < level.size(); ++i) nxt.push_back(lerp(level[i], level[i + 1], t));
+        if (nxt.size() > 1) drawPolyline(c, nxt, levels[l]);
+        level = nxt;
+    }
+    drawPolyline(c, sampleBezier(ctrl, 60), YELLOW);
+    dot(c, level[0], RED);
+}
+
+void splines(Canvas& c, Vec2 o) {
+    std::vector<Vec2> ctrl{o + Vec2{20, 160}, o + Vec2{60, 50}, o + Vec2{110, 190}, o + Vec2{160, 40}, o + Vec2{220, 150}};
+    drawPolyline(c, ctrl, FAINT);
+    for (const Vec2& p : ctrl) dot(c, p, WHITE);
+    drawPolyline(c, sampleCatmullRom(ctrl, 20, false), YELLOW); // passes through points
+    drawPolyline(c, sampleBSpline(ctrl, 20, false), BLUE);       // smooths near them
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -84,6 +126,10 @@ int main(int argc, char** argv) {
     lineClipping(c, origin(1, 0));
     polygonOps(c, origin(2, 0));
     filling(c, origin(3, 0));
+    polygonClipping(c, origin(0, 1));
+    circles(c, origin(1, 1));
+    bezier(c, origin(2, 1));
+    splines(c, origin(3, 1));
     for (int k = 1; k < 4; ++k) drawLine(c, {double(k * CELL), 0}, {double(k * CELL), double(2 * CELL)}, GRID);
     drawLine(c, {0, double(CELL)}, {double(4 * CELL), double(CELL)}, GRID);
 
