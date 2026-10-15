@@ -16,6 +16,7 @@
 #include "cg/line.hpp"
 #include "cg/polygon.hpp"
 #include "cg/transform.hpp"
+#include "scene/palette.hpp"
 
 using namespace cg;
 
@@ -25,11 +26,25 @@ namespace {
 constexpr double CEILING_Y = 48, HORIZON_Y = 300;
 const Vec2 VANISHING_POINT{480, 210};
 const Vec2 PLATFORM_CENTRE{480, 440}; // the car stands on the display platform
+constexpr double PLATFORM_RX = 320, PLATFORM_RY = 62, PLATFORM_DEPTH = 18;
 
 int ri(double v) { return static_cast<int>(std::lround(v)); }
 
 Shader verticalGradient(Color top, Color bottom, double y0, double y1) {
     return [=](int, int y) { return mix(top, bottom, std::clamp((y - y0) / (y1 - y0), 0.0, 1.0)); };
+}
+
+// Rounded rectangle: straight edges joined by quadratic Bezier corners.
+Polygon roundedRect(const Rect& r, double rad) {
+    std::vector<Vec2> pts;
+    auto corner = [&](Vec2 a, Vec2 c, Vec2 b) {
+        for (const Vec2& p : sampleBezier({a, c, b}, 6)) pts.push_back(p);
+    };
+    corner({r.xmin, r.ymin + rad}, {r.xmin, r.ymin}, {r.xmin + rad, r.ymin});
+    corner({r.xmax - rad, r.ymin}, {r.xmax, r.ymin}, {r.xmax, r.ymin + rad});
+    corner({r.xmax, r.ymax - rad}, {r.xmax, r.ymax}, {r.xmax - rad, r.ymax});
+    corner({r.xmin + rad, r.ymax}, {r.xmin, r.ymax}, {r.xmin, r.ymax - rad});
+    return Polygon(pts);
 }
 
 void drawRoom(Canvas& c) {
@@ -75,6 +90,34 @@ void drawSpotlights(Canvas& c) {
         fillPolygon(c, Polygon({{lx - 16, CEILING_Y - 10}, {lx + 16, CEILING_Y - 10},
                                 {lx + 11, CEILING_Y + 6}, {lx - 11, CEILING_Y + 6}}), Color{55, 57, 64});
         fillEllipse(c, ri(lx), ri(CEILING_Y + 6), 10, 3, warm);
+    }
+}
+
+void drawPlatform(Canvas& c, double theta) {
+    int cx = ri(PLATFORM_CENTRE.x), cy = ri(PLATFORM_CENTRE.y);
+    int rx = ri(PLATFORM_RX), ry = ri(PLATFORM_RY), depth = ri(PLATFORM_DEPTH);
+    const Color side{34, 35, 40}, rim{150, 154, 165};
+
+    // A short cylinder: bottom ellipse + side band + top ellipse.
+    fillEllipse(c, cx, cy + depth, rx, ry, side);
+    fillPolygon(c, Polygon::rectangle({double(cx - rx), double(cy), double(cx + rx + 1), double(cy + depth)}), side);
+    fillEllipse(c, cx, cy, rx, ry, [&](int x, int y) {
+        double dx = (x - cx) / double(rx), dy = (y - cy) / double(ry);
+        return shade(Color{92, 95, 104}, 1.25 - 0.45 * std::sqrt(dx * dx + dy * dy)); // brushed metal
+    });
+    drawEllipse(c, cx, cy, rx, ry, rim);
+
+    // Radial grooves rotate with the platform, so the animation is visible.
+    for (int k = 0; k < 12; ++k) {
+        Vec2 p = ellipsePoint(PLATFORM_CENTRE, PLATFORM_RX - 8, PLATFORM_RY - 3, theta + k * PI / 6);
+        drawLineAlpha(c, PLATFORM_CENTRE, p, {60, 62, 70}, 0.6);
+    }
+    // Rim lights on the front face (sin > 0 means the near side of the ellipse).
+    for (int k = 0; k < 18; ++k) {
+        double a = theta + k * 2 * PI / 18;
+        if (std::sin(a) <= 0.05) continue;
+        Vec2 p = ellipsePoint({PLATFORM_CENTRE.x, PLATFORM_CENTRE.y + PLATFORM_DEPTH / 2}, PLATFORM_RX, PLATFORM_RY, a);
+        fillCircle(c, ri(p.x), ri(p.y), 3, {120, 210, 255});
     }
 }
 
@@ -163,6 +206,22 @@ void drawCar(Canvas& c, Color paint, double spin) {
     for (double wx : {WHEEL_X, -WHEEL_X}) drawWheel(c, toScreen, s, wx, spin);
 }
 
+// Picker panel: one swatch per paint, the selected one ringed.
+void drawColourPicker(Canvas& c, int selected) {
+    const auto& ps = paints();
+    Rect panel{double(c.width()) - 16 - 6 * 34 - 14, 62, double(c.width()) - 16, 106};
+    fillPolygon(c, roundedRect(panel, 10), Color{15, 16, 20}, 0.7);
+    for (std::size_t i = 0; i < ps.size(); ++i) {
+        int x = ri(panel.xmin + 24 + i * 34), y = ri((panel.ymin + panel.ymax) / 2);
+        fillCircle(c, x, y, 11, paintColor(ps[i]));
+        drawCircle(c, x, y, 11, {12, 12, 14});
+        if (int(i) == selected) {
+            drawCircle(c, x, y, 14, {255, 255, 255});
+            drawCircle(c, x, y, 15, {255, 255, 255});
+        }
+    }
+}
+
 } // namespace
 
 void renderShowroom(Canvas& c, const ShowroomOptions& opt) {
@@ -171,7 +230,9 @@ void renderShowroom(Canvas& c, const ShowroomOptions& opt) {
     // the colour picker and minimap after it.
     drawRoom(c);
     drawSpotlights(c);
+    drawPlatform(c, theta);
     drawCar(c, opt.paint, theta * 3); // wheels turn three times per platform turn
+    drawColourPicker(c, opt.selectedSwatch);
 }
 
 } // namespace scene
