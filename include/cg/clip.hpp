@@ -10,4 +10,8 @@ namespace cg {
 bool clipLineCohenSutherland(Vec2& a, Vec2& b, const Rect& r);
 bool clipLineLiangBarsky(Vec2& a, Vec2& b, const Rect& r);
 
+// Clip any polygon against a convex clip polygon (either winding).
+Polygon clipSutherlandHodgman(const Polygon& subject, const Polygon& convexClip);
+Polygon clipToRect(const Polygon& subject, const Rect& r);
+
 } // namespace cg

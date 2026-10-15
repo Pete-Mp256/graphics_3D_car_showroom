@@ -51,4 +51,40 @@ bool clipLineLiangBarsky(Vec2& a, Vec2& b, const Rect& r) {
     return true;
 }
 
+// ---- Sutherland-Hodgman ----------------------------------------------------
+// Clip the subject against each clip edge in turn. For an edge S->E of the subject:
+//   in->in: keep E;  in->out: keep intersection;  out->in: keep intersection and E.
+Polygon clipSutherlandHodgman(const Polygon& subject, const Polygon& clip) {
+    if (subject.size() < 3 || clip.size() < 3) return {};
+    double orient = clip.signedArea() >= 0 ? 1.0 : -1.0; // works for either winding
+    std::vector<Vec2> output = subject.pts;
+
+    for (std::size_t i = 0, n = clip.size(); i < n && !output.empty(); ++i) {
+        Vec2 c0 = clip.pts[i], c1 = clip.pts[(i + 1) % n], edge = c1 - c0;
+        auto inside = [&](const Vec2& p) { return cross(edge, p - c0) * orient >= 0; };
+        auto intersect = [&](const Vec2& s, const Vec2& e) {
+            double t = cross(edge, s - c0) / cross(edge, s - e);
+            return lerp(s, e, t);
+        };
+
+        std::vector<Vec2> input;
+        input.swap(output);
+        Vec2 s = input.back();
+        for (const Vec2& e : input) {
+            if (inside(e)) {
+                if (!inside(s)) output.push_back(intersect(s, e));
+                output.push_back(e);
+            } else if (inside(s)) {
+                output.push_back(intersect(s, e));
+            }
+            s = e;
+        }
+    }
+    return Polygon(output);
+}
+
+Polygon clipToRect(const Polygon& subject, const Rect& r) {
+    return clipSutherlandHodgman(subject, Polygon::rectangle(r));
+}
+
 } // namespace cg
