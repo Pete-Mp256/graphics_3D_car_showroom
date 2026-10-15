@@ -1,6 +1,7 @@
 #include "cg/line.hpp"
 #include <algorithm>
 #include <cmath>
+#include "cg/fill.hpp"
 
 namespace cg {
 
@@ -36,6 +37,14 @@ void drawDashedLine(Canvas& c, Vec2 a, Vec2 b, Color col, int dash, int gap) {
     bresenham(r(a.x), r(a.y), r(b.x), r(b.y), [&](int x, int y) {
         if (i++ % (dash + gap) < dash) c.setPixel(x, y, col);
     });
+}
+
+void drawThickLine(Canvas& c, Vec2 a, Vec2 b, double thickness, Color col) {
+    Vec2 d = b - a;
+    double len = d.length();
+    if (len == 0) return;
+    Vec2 n = Vec2{-d.y, d.x} * (thickness / 2.0 / len); // perpendicular offset
+    fillPolygon(c, Polygon({a + n, b + n, b - n, a - n}), col);
 }
 
 std::optional<Vec2> intersectLines(Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2) {
