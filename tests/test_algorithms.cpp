@@ -24,6 +24,13 @@ static int failures = 0, checks = 0;
 static bool near(double a, double b, double eps = 1e-6) { return std::fabs(a - b) < eps; }
 static bool near(Vec2 a, Vec2 b, double eps = 1e-6) { return near(a.x, b.x, eps) && near(a.y, b.y, eps); }
 
+static int countColor(const Canvas& c, Color col) {
+    int n = 0;
+    for (int y = 0; y < c.height(); ++y)
+        for (int x = 0; x < c.width(); ++x) n += c.getPixel(x, y) == col;
+    return n;
+}
+
 static void testLines() {
     std::set<std::pair<int, int>> px;
     bresenham(0, 0, 10, 4, [&](int x, int y) { px.insert({x, y}); });
@@ -79,11 +86,54 @@ static void testPolygonClipping() {
     CHECK(clipToRect(a, {20, 20, 30, 30}).size() == 0);
 }
 
+static void testFilling() {
+    Color fg{255, 0, 0};
+    Canvas c(20, 20);
+    fillPolygon(c, Polygon::rectangle({2, 3, 12, 8}), fg);
+    CHECK(countColor(c, fg) == 50); // exactly 10 x 5 pixel centres
+
+    Canvas t(20, 20);
+    fillPolygon(t, Polygon({{0, 0}, {10, 0}, {0, 10}}), fg);
+    fillPolygon(t, Polygon({{10, 0}, {10, 10}, {0, 10}}), Color{0, 0, 255});
+    CHECK(countColor(t, fg) + countColor(t, {0, 0, 255}) == 100); // shared edge, no gaps or overlap
+
+    Canvas f(20, 20);
+    drawPolygon(f, Polygon::rectangle({2, 2, 10, 10}), {255, 255, 255});
+    floodFill(f, 5, 5, fg);
+    CHECK(countColor(f, fg) == 49); // 7 x 7 interior
+    Canvas g(20, 20);
+    drawCircle(g, 10, 10, 6, {255, 255, 255});
+    boundaryFill(g, 10, 10, fg, {255, 255, 255});
+    CHECK(g.getPixel(10, 10) == fg && g.getPixel(0, 0) != fg);
+}
+
+static void testCircles() {
+    Color w{255, 255, 255};
+    Canvas c(64, 64);
+    drawCircle(c, 32, 32, 20, w);
+    bool onRing = true;
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x)
+            if (c.getPixel(x, y) == w && std::fabs(std::hypot(x - 32, y - 32) - 20) > 0.75) onRing = false;
+    CHECK(onRing);
+    CHECK(c.getPixel(52, 32) == w && c.getPixel(32, 12) == w);
+
+    Canvas e(64, 64);
+    drawEllipse(e, 32, 32, 25, 10, w);
+    CHECK(e.getPixel(57, 32) == w && e.getPixel(32, 22) == w && e.getPixel(32, 32) != w);
+
+    CHECK(near(ellipsePoint({0, 0}, 3, 2, 0), {3, 0}));
+    CHECK(near(ellipsePoint({0, 0}, 3, 2, PI / 2), {0, 2}));
+    CHECK(std::fabs(ellipsePolygon({0, 0}, 10, 10, 360).area() - PI * 100) < 0.1);
+}
+
 int main() {
     testLines();
     testLineClipping();
     testPolygons();
     testPolygonClipping();
+    testFilling();
+    testCircles();
     std::cout << (checks - failures) << "/" << checks << " checks passed\n";
     return failures ? 1 : 0;
 }
