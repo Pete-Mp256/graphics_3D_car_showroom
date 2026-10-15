@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 #include <vector>
 
 #include "cg/circle.hpp"
@@ -57,6 +58,24 @@ void drawRoom(Canvas& c) {
     for (int i = -1; i <= 13; ++i) ctrl.push_back({i * 80.0, 150.0 + ((i % 2) ? -22.0 : 22.0)});
     std::vector<Vec2> wave = sampleBSpline(ctrl, 12, false);
     for (std::size_t i = 0; i + 1 < wave.size(); ++i) drawThickLine(c, wave[i], wave[i + 1], 3.0, {150, 156, 170});
+}
+
+void drawSpotlights(Canvas& c) {
+    const Rect room{0, CEILING_Y, double(c.width()), double(c.height())};
+    const Color warm{255, 244, 214};
+    for (double lx : {200.0, 480.0, 760.0}) {
+        double target = lx + (PLATFORM_CENTRE.x - lx) * 0.55; // aim beams towards the car
+        // Beams reach past the bottom of the image; Sutherland-Hodgman trims them to the room.
+        for (auto [spread, alpha] : {std::pair{170.0, 0.07}, std::pair{95.0, 0.09}}) {
+            Polygon beam({{lx - 10, CEILING_Y + 6}, {lx + 10, CEILING_Y + 6},
+                          {target + spread, 620}, {target - spread, 620}});
+            fillPolygon(c, clipToRect(beam, room), warm, alpha);
+        }
+        fillEllipse(c, ri(target), ri(PLATFORM_CENTRE.y + 30), 140, 26, warm, 0.10); // light pool
+        fillPolygon(c, Polygon({{lx - 16, CEILING_Y - 10}, {lx + 16, CEILING_Y - 10},
+                                {lx + 11, CEILING_Y + 6}, {lx - 11, CEILING_Y + 6}}), Color{55, 57, 64});
+        fillEllipse(c, ri(lx), ri(CEILING_Y + 6), 10, 3, warm);
+    }
 }
 
 // The car side profile, in car space: x forward (-200..200), y up, ground at y = 0.
@@ -151,6 +170,7 @@ void renderShowroom(Canvas& c, const ShowroomOptions& opt) {
     // Layers are drawn back to front: room, spotlights and platform go before the car,
     // the colour picker and minimap after it.
     drawRoom(c);
+    drawSpotlights(c);
     drawCar(c, opt.paint, theta * 3); // wheels turn three times per platform turn
 }
 
