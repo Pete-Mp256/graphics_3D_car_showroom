@@ -222,6 +222,38 @@ void drawColourPicker(Canvas& c, int selected) {
     }
 }
 
+// Top-down minimap: platform, car footprint (rotated with Mat3) and the camera's
+// orbit path (closed Catmull-Rom spline), everything clipped to the panel.
+void drawMinimap(Canvas& c, Color paint, double theta) {
+    const Rect panel{16, 62, 206, 202};
+    const Vec2 centre{(panel.xmin + panel.xmax) / 2, (panel.ymin + panel.ymax) / 2};
+    fillPolygon(c, roundedRect(panel, 10), Color{15, 16, 20}, 0.7);
+
+    fillCircle(c, ri(centre.x), ri(centre.y), 42, {90, 94, 104}, 0.8);
+    drawCircle(c, ri(centre.x), ri(centre.y), 42, {150, 154, 165});
+
+    Polygon car = Polygon::rectangle({centre.x - 34, centre.y - 14, centre.x + 34, centre.y + 14});
+    Mat3 spin = Mat3::rotateAbout(theta, centre);
+    fillPolygon(c, car.transformed(spin), paint);
+    fillPolygon(c, Polygon({{centre.x + 34, centre.y - 9}, {centre.x + 44, centre.y}, {centre.x + 34, centre.y + 9}})
+                       .transformed(spin), Color{255, 248, 220}); // nose marker
+
+    std::vector<Vec2> ctrl;
+    for (int k = 0; k < 6; ++k) {
+        double a = k * PI / 3, rad = (k % 2) ? 74 : 62; // deliberately uneven orbit
+        ctrl.push_back({centre.x + rad * std::cos(a), centre.y + rad * 0.85 * std::sin(a)});
+    }
+    std::vector<Vec2> orbit = sampleCatmullRom(ctrl, 16, true);
+    const Rect inner{panel.xmin + 2, panel.ymin + 2, panel.xmax - 2, panel.ymax - 2};
+    for (std::size_t i = 0; i < orbit.size(); ++i) {
+        Vec2 a = orbit[i], b = orbit[(i + 1) % orbit.size()];
+        if (i % 2 == 0 && clipLineLiangBarsky(a, b, inner)) drawLine(c, a, b, {120, 210, 255}); // dashed
+    }
+    Vec2 cam = orbit[ri(orbit.size() * 0.25) % orbit.size()]; // camera in front of the car
+    Polygon camIcon = Polygon::regular(cam, 8, 3, std::atan2(centre.y - cam.y, centre.x - cam.x));
+    fillPolygon(c, clipToRect(camIcon, inner), Color{255, 210, 80});
+}
+
 } // namespace
 
 void renderShowroom(Canvas& c, const ShowroomOptions& opt) {
@@ -233,6 +265,7 @@ void renderShowroom(Canvas& c, const ShowroomOptions& opt) {
     drawPlatform(c, theta);
     drawCar(c, opt.paint, theta * 3); // wheels turn three times per platform turn
     drawColourPicker(c, opt.selectedSwatch);
+    drawMinimap(c, opt.paint, theta);
 }
 
 } // namespace scene
