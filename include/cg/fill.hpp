@@ -17,5 +17,6 @@ void fillPolygon(Canvas& c, const Polygon& poly, const Shader& shader, double al
 
 // Seed fills (4-connected, iterative so large regions don't overflow the stack).
 void floodFill(Canvas& c, int x, int y, Color newColor);                 // replaces target colour
+void boundaryFill(Canvas& c, int x, int y, Color fillColor, Color boundary); // stops at boundary
 
 } // namespace cg

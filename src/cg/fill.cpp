@@ -85,4 +85,20 @@ void floodFill(Canvas& c, int x, int y, Color newColor) {
     }
 }
 
+void boundaryFill(Canvas& c, int x, int y, Color fillColor, Color boundary) {
+    std::vector<std::pair<int, int>> stack{{x, y}};
+    while (!stack.empty()) {
+        auto [px, py] = stack.back();
+        stack.pop_back();
+        if (!c.inBounds(px, py)) continue;
+        Color cur = c.getPixel(px, py);
+        if (cur == boundary || cur == fillColor) continue;
+        c.setPixel(px, py, fillColor);
+        stack.push_back({px + 1, py});
+        stack.push_back({px - 1, py});
+        stack.push_back({px, py + 1});
+        stack.push_back({px, py - 1});
+    }
+}
+
 } // namespace cg
