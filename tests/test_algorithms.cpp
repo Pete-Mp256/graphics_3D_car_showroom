@@ -51,9 +51,39 @@ static void testLineClipping() {
     CHECK(!clipLineLiangBarsky(a, b, r));
 }
 
+static void testPolygons() {
+    Polygon sq = Polygon::rectangle({0, 0, 4, 4});
+    CHECK(near(sq.area(), 16));
+    CHECK(near(sq.perimeter(), 16));
+    CHECK(near(sq.centroid(), {2, 2}));
+    CHECK(sq.isConvex());
+    CHECK(sq.contains({1, 1}) && !sq.contains({5, 1}));
+
+    Polygon l({{0, 0}, {4, 0}, {4, 1}, {1, 1}, {1, 4}, {0, 4}}); // L shape
+    CHECK(!l.isConvex());
+    CHECK(near(l.area(), 7));
+    CHECK(!l.contains({3, 3}) && l.contains({0.5, 3}));
+
+    Polygon r = sq.transformed(Mat3::rotateAbout(PI / 2, {2, 2}));
+    CHECK(near(r.area(), 16) && near(r.centroid(), {2, 2}));
+    CHECK(near(Mat3::translate(3, -1).apply({1, 1}), {4, 0}));
+    CHECK(near(Mat3::scaleAbout(2, 2, {1, 1}).apply({2, 2}), {3, 3}));
+}
+
+static void testPolygonClipping() {
+    Polygon a = Polygon::rectangle({0, 0, 10, 10});
+    Polygon b = Polygon::rectangle({5, 5, 15, 15});
+    CHECK(near(clipSutherlandHodgman(a, b).area(), 25));
+    Polygon cw({{5, 5}, {5, 15}, {15, 15}, {15, 5}}); // same window, opposite winding
+    CHECK(near(clipSutherlandHodgman(a, cw).area(), 25));
+    CHECK(clipToRect(a, {20, 20, 30, 30}).size() == 0);
+}
+
 int main() {
     testLines();
     testLineClipping();
+    testPolygons();
+    testPolygonClipping();
     std::cout << (checks - failures) << "/" << checks << " checks passed\n";
     return failures ? 1 : 0;
 }
