@@ -29,4 +29,26 @@ bool clipLineCohenSutherland(Vec2& a, Vec2& b, const Rect& r) {
     }
 }
 
+// ---- Liang-Barsky ----------------------------------------------------------
+// Parametric form P(t) = a + t(b - a); shrink [t0, t1] against each boundary.
+bool clipLineLiangBarsky(Vec2& a, Vec2& b, const Rect& r) {
+    double dx = b.x - a.x, dy = b.y - a.y, t0 = 0, t1 = 1;
+    const double p[4] = {-dx, dx, -dy, dy};
+    const double q[4] = {a.x - r.xmin, r.xmax - a.x, a.y - r.ymin, r.ymax - a.y};
+    for (int i = 0; i < 4; ++i) {
+        if (p[i] == 0) {
+            if (q[i] < 0) return false; // parallel and outside
+            continue;
+        }
+        double t = q[i] / p[i];
+        if (p[i] < 0) t0 = std::max(t0, t); // entering
+        else          t1 = std::min(t1, t); // leaving
+        if (t0 > t1) return false;
+    }
+    Vec2 a0 = a;
+    a = {a0.x + t0 * dx, a0.y + t0 * dy};
+    b = {a0.x + t1 * dx, a0.y + t1 * dy};
+    return true;
+}
+
 } // namespace cg

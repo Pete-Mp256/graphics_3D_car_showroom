@@ -8,5 +8,6 @@ namespace cg {
 
 // Clip segment a-b to the rectangle in place. Returns false if fully outside.
 bool clipLineCohenSutherland(Vec2& a, Vec2& b, const Rect& r);
+bool clipLineLiangBarsky(Vec2& a, Vec2& b, const Rect& r);
 
 } // namespace cg
