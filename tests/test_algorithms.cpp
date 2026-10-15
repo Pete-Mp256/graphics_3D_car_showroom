@@ -127,6 +127,31 @@ static void testCircles() {
     CHECK(std::fabs(ellipsePolygon({0, 0}, 10, 10, 360).area() - PI * 100) < 0.1);
 }
 
+static void testCurves() {
+    std::vector<Vec2> ctrl{{0, 0}, {0, 10}, {10, 10}, {10, 0}};
+    CHECK(near(bezierPoint(ctrl, 0), {0, 0}) && near(bezierPoint(ctrl, 1), {10, 0}));
+    CHECK(near(bezierPoint(ctrl, 0.5), {5, 7.5}));
+    CHECK(sampleBezier(ctrl, 10).size() == 11);
+    CHECK(sampleCubicPath({{0, 0}, {1, 1}, {2, 1}, {3, 0}, {4, -1}, {5, -1}, {6, 0}}, 8).size() == 17);
+
+    Vec2 p0{0, 0}, p1{1, 2}, p2{3, 3}, p3{4, 0};
+    CHECK(near(catmullRom(p0, p1, p2, p3, 0), p1) && near(catmullRom(p0, p1, p2, p3, 1), p2));
+    std::vector<Vec2> pts{{0, 0}, {5, 5}, {10, 0}, {15, 5}};
+    auto cr = sampleCatmullRom(pts, 10, false);
+    CHECK(near(cr.front(), pts.front()) && near(cr.back(), pts.back()) && near(cr[10], pts[1]));
+    // A B-spline through collinear, evenly spaced points stays on that line.
+    Vec2 b = bsplinePoint({0, 0}, {1, 1}, {2, 2}, {3, 3}, 0.3);
+    CHECK(near(b.x, b.y));
+}
+
+static void testColor() {
+    CHECK(fromHSV(0, 1, 1) == (Color{255, 0, 0}));
+    CHECK(fromHSV(120, 1, 1) == (Color{0, 255, 0}));
+    double h, s, v;
+    toHSV({0, 0, 255}, h, s, v);
+    CHECK(near(h, 240) && near(s, 1) && near(v, 1));
+}
+
 int main() {
     testLines();
     testLineClipping();
@@ -134,6 +159,8 @@ int main() {
     testPolygonClipping();
     testFilling();
     testCircles();
+    testCurves();
+    testColor();
     std::cout << (checks - failures) << "/" << checks << " checks passed\n";
     return failures ? 1 : 0;
 }
