@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 #include <vector>
 
 #include "cg/circle.hpp"
@@ -21,12 +22,60 @@ using namespace cg;
 namespace scene {
 namespace {
 
+constexpr double CEILING_Y = 48, HORIZON_Y = 300;
+const Vec2 VANISHING_POINT{480, 210};
 const Vec2 PLATFORM_CENTRE{480, 440}; // the car stands on the display platform
 
 int ri(double v) { return static_cast<int>(std::lround(v)); }
 
 Shader verticalGradient(Color top, Color bottom, double y0, double y1) {
     return [=](int, int y) { return mix(top, bottom, std::clamp((y - y0) / (y1 - y0), 0.0, 1.0)); };
+}
+
+void drawRoom(Canvas& c) {
+    const Rect ceiling{0, 0, double(c.width()), CEILING_Y};
+    const Rect wall{0, CEILING_Y, double(c.width()), HORIZON_Y};
+    const Rect floor{0, HORIZON_Y, double(c.width() - 1), double(c.height() - 1)};
+
+    fillPolygon(c, Polygon::rectangle(ceiling), Color{28, 30, 36});
+    fillPolygon(c, Polygon::rectangle(wall), verticalGradient({62, 66, 78}, {104, 108, 120}, CEILING_Y, HORIZON_Y));
+    fillPolygon(c, Polygon::rectangle(floor), verticalGradient({70, 72, 78}, {38, 39, 44}, HORIZON_Y, c.height()));
+
+    // Floor tiles in one-point perspective: rays from the vanishing point, clipped to
+    // the floor with Cohen-Sutherland, plus horizontal lines spaced closer near the horizon.
+    for (int k = -12; k <= 12; ++k) {
+        Vec2 a = VANISHING_POINT, b{480 + k * 170.0, 700};
+        if (clipLineCohenSutherland(a, b, floor)) drawLineAlpha(c, a, b, {20, 20, 24}, 0.45);
+    }
+    for (int k = 1; k <= 8; ++k) {
+        double t = k / 8.0, y = HORIZON_Y + (c.height() - HORIZON_Y) * t * t;
+        drawLineAlpha(c, {0, y}, {double(c.width()), y}, {20, 20, 24}, 0.45);
+    }
+    drawLine(c, {0, HORIZON_Y}, {double(c.width()), HORIZON_Y}, {30, 31, 36});
+
+    // Brand trim along the back wall: a closed-off uniform cubic B-spline wave.
+    std::vector<Vec2> ctrl;
+    for (int i = -1; i <= 13; ++i) ctrl.push_back({i * 80.0, 150.0 + ((i % 2) ? -22.0 : 22.0)});
+    std::vector<Vec2> wave = sampleBSpline(ctrl, 12, false);
+    for (std::size_t i = 0; i + 1 < wave.size(); ++i) drawThickLine(c, wave[i], wave[i + 1], 3.0, {150, 156, 170});
+}
+
+void drawSpotlights(Canvas& c) {
+    const Rect room{0, CEILING_Y, double(c.width()), double(c.height())};
+    const Color warm{255, 244, 214};
+    for (double lx : {200.0, 480.0, 760.0}) {
+        double target = lx + (PLATFORM_CENTRE.x - lx) * 0.55; // aim beams towards the car
+        // Beams reach past the bottom of the image; Sutherland-Hodgman trims them to the room.
+        for (auto [spread, alpha] : {std::pair{170.0, 0.07}, std::pair{95.0, 0.09}}) {
+            Polygon beam({{lx - 10, CEILING_Y + 6}, {lx + 10, CEILING_Y + 6},
+                          {target + spread, 620}, {target - spread, 620}});
+            fillPolygon(c, clipToRect(beam, room), warm, alpha);
+        }
+        fillEllipse(c, ri(target), ri(PLATFORM_CENTRE.y + 30), 140, 26, warm, 0.10); // light pool
+        fillPolygon(c, Polygon({{lx - 16, CEILING_Y - 10}, {lx + 16, CEILING_Y - 10},
+                                {lx + 11, CEILING_Y + 6}, {lx - 11, CEILING_Y + 6}}), Color{55, 57, 64});
+        fillEllipse(c, ri(lx), ri(CEILING_Y + 6), 10, 3, warm);
+    }
 }
 
 // The car side profile, in car space: x forward (-200..200), y up, ground at y = 0.
@@ -120,6 +169,8 @@ void renderShowroom(Canvas& c, const ShowroomOptions& opt) {
     double theta = deg2rad(opt.platformDeg);
     // Layers are drawn back to front: room, spotlights and platform go before the car,
     // the colour picker and minimap after it.
+    drawRoom(c);
+    drawSpotlights(c);
     drawCar(c, opt.paint, theta * 3); // wheels turn three times per platform turn
 }
 
